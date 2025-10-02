@@ -1,0 +1,5 @@
+{
+  "name": "World Anvil Assistant",
+  "description": "An AI-powered assistant that interacts with your World Anvil account via the Boromir API to fetch and interpret information about your world. Ask questions in plain language and get answers based solely on your own lore.",
+  "requestFramePermissions": []
+}
