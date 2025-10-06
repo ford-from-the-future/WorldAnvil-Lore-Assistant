@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback, useEffect } from 'react';
 import { ApiKeyForm } from './components/ApiKeyForm';
 import { ChatInterface } from './components/ChatInterface';
@@ -34,16 +35,21 @@ const App: React.FC = () => {
       setKeysSubmitted(true);
       
       const worldName = data?.name || 'your world';
+      const articleCount = (Array.isArray(data?.articles) ? data.articles.length : 0);
+      const articleCountText = articleCount > 0 ? ` I have found ${articleCount} articles.` : '';
+
       setMessages([
         {
           role: 'assistant',
-          content: `Connection successful. I have loaded the archives for '${worldName}'. What lore may I illuminate for you?`,
+          content: `Connection successful. I have loaded the archives for '${worldName}'.${articleCountText} What lore may I illuminate for you?`,
         },
       ]);
 
     } catch (e) {
-       const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred during connection.';
-       setError(errorMessage);
+       // Display a more user-friendly error message with actionable advice.
+       const userFriendlyError = "Connection failed. Please check your API keys and World ID, or ensure you have granted the Boromir API permission in your World Anvil settings.";
+       setError(userFriendlyError);
+       console.error("World Anvil connection error:", e); // Log the original error for debugging.
     } finally {
       setIsLoading(false);
     }
