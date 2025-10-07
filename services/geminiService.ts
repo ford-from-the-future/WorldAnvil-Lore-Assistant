@@ -1,43 +1,24 @@
+// services/geminiService.ts
+// Client-side Gemini service that calls your server endpoint safely.
 
-import { GoogleGenAI } from "@google/genai";
-
-// Ensure the API key is available from environment variables
-const apiKey = process.env.API_KEY;
-if (!apiKey) {
-  throw new Error("API_KEY environment variable not set");
-}
-
-const ai = new GoogleGenAI({ apiKey });
-
-/**
- * Gets a response from the Gemini AI based on provided context and a user question.
- * @param context - A string (likely JSON) of World Anvil data.
- * @param question - The user's question.
- * @returns The AI's textual response.
- */
-export const getAiResponse = async (context: string, question: string): Promise<string> => {
-  const model = "gemini-2.5-flash";
-
-  const systemInstruction = `You are a helpful assistant and lore master for a world created in World Anvil. Your knowledge is strictly limited to the information provided in the "CONTEXT" JSON data. Do not use any external knowledge or make up information. If the answer is not in the context, state that you cannot find that information within the provided lore.
-
-When you answer a question, you MUST cite the source articles from the context by providing Markdown links. The article objects in the JSON have a 'url' property. You must create a relative link from this URL by taking only the path. For example, if an article's 'url' is 'https://www.worldanvil.com/w/my-world/a/my-article', your link should be formatted as '[Article Title](/w/my-world/a/my-article)'.
-
-Weave these citations naturally into your response where the information is used. If multiple articles are used, cite them all. Answer in a clear and helpful manner, as if you are a scholar of this specific world.`;
-
-  const fullPrompt = `CONTEXT:\n---\n${context}\n---\n\nQUESTION:\n${question}`;
-
+export async function getAiResponse(context: string, question: string): Promise<string> {
   try {
-    const response = await ai.models.generateContent({
-      model,
-      contents: fullPrompt,
-      config: {
-        systemInstruction,
-      },
+    const response = await fetch("/api/ai", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ context, question }),
     });
 
-    return response.text;
-  } catch (error) {
-    console.error("Error calling Gemini API:", error);
-    throw new Error("Failed to get a response from the AI. Please check the console for details.");
+    if (!response.ok) {
+      const errText = await response.text();
+      throw new Error(errText || "AI request failed");
+    }
+
+    const data = await response.json();
+    return data.text || "";
+  } catch (err) {
+    console.error("Error calling AI endpoint:", err);
+    throw err;
   }
-};
+}
+// This service abstracts the API call and error handling for easier use in your components.

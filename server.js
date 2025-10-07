@@ -3,6 +3,7 @@ import express from "express";
 import path from "path";
 import cors from "cors";
 import axios from "axios";
+import { GoogleGenAI } from "@google/genai";
 
 const app = express();
 const PORT = process.env.PORT || 8080;
@@ -40,6 +41,29 @@ app.post("/api/boromir", async (req, res) => {
     res.json(r.data);
   } catch (err) {
     res.status(err.response?.status || 500).json({ error: err.message });
+  }
+});
+
+// AI endpoint: runs on the server, using env var
+app.post("/api/ai", async (req, res) => {
+  try {
+    const { context, question } = req.body || {};
+    if (!question) return res.status(400).json({ error: "Missing 'question'" });
+
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) return res.status(500).json({ error: "GEMINI_API_KEY not set" });
+
+    const ai = new GoogleGenAI({ apiKey });
+    const model = ai.getGenerativeModel({ model: "gemini-2.0-flash" });
+
+    const resp = await model.generateContent([
+      { role: "user", parts: [{ text: `${context || ""}\n\nQ: ${question}` }] }
+    ]);
+    const text = resp?.response?.text?.() ?? "";
+    res.json({ text });
+  } catch (err) {
+    console.error("AI error:", err);
+    res.status(500).json({ error: "AI request failed" });
   }
 });
 
