@@ -23,24 +23,36 @@ app.use(
   })
 );
 
-// ---- API proxy: World Anvil Boromir ----
-// Keep secrets on the server; don't ship them to the browser.
-app.post("/api/boromir", async (req, res) => {
+// Replace your existing Boromir route with this:
+app.post("/api/boromir/world/:worldId", async (req, res) => {
   try {
-    const worldId = req.body?.worldId || process.env.WORLD_ID;
+    const { worldId } = req.params;
+    const { appKey, authToken } = req.body || {};
+
     if (!worldId) return res.status(400).json({ error: "Missing worldId" });
-    const r = await axios.get(
-      `https://www.worldanvil.com/api/external/boromir/world/${worldId}?granularity=1`,
-      {
-        headers: {
-          appKey: process.env.APP_KEY,
-          authToken: process.env.AUTH_TOKEN,
-        },
-      }
-    );
-    res.json(r.data);
+    if (!appKey || !authToken) return res.status(400).json({ error: "Missing appKey or authToken" });
+
+    const url = `https://www.worldanvil.com/api/external/boromir/world/${encodeURIComponent(worldId)}?granularity=1`;
+
+    const wa = await axios.get(url, {
+      headers: {
+        'x-application-key': appKey,
+        'x-auth-token': authToken,
+        'Content-Type': 'application/json'
+      },
+      validateStatus: () => true,
+    });
+
+    if (wa.status < 200 || wa.status >= 300) {
+      return res.status(wa.status).json({
+        error: wa.data?.message || `World Anvil returned ${wa.status}`,
+      });
+    }
+
+    res.json(wa.data);
   } catch (err) {
-    res.status(err.response?.status || 500).json({ error: err.message });
+    console.error("Boromir proxy error:", err);
+    res.status(500).json({ error: "Failed to reach World Anvil" });
   }
 });
 

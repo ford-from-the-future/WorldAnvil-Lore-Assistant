@@ -47,7 +47,7 @@ const App: React.FC = () => {
 
     } catch (e) {
        // Display a more user-friendly error message with actionable advice.
-       const userFriendlyError = "Connection failed. Please check your API keys and World ID, or ensure you have granted the Boromir API permission in your World Anvil settings.";
+       const userFriendlyError = "Connection failed. Check your App Key, User Auth Token, and World ID. Note: the Boromir API requires a valid App Key and a User API Token (guild membership).";
        setError(userFriendlyError);
        console.error("World Anvil connection error:", e); // Log the original error for debugging.
     } finally {

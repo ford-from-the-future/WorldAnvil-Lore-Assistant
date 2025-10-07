@@ -11,38 +11,20 @@ export const fetchWorldData = async (
   authToken: string,
   worldId: string
 ): Promise<any> => {
-  
   if (!appKey || !authToken || !worldId) {
     throw new Error('World Anvil API keys and World ID are required.');
   }
 
-  const url = `https://www.worldanvil.com/api/external/boromir/world/${worldId}?granularity=1`;
+  const r = await fetch(`/api/boromir/world/${encodeURIComponent(worldId)}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ appKey, authToken })
+  });
 
-  console.log(`Fetching world data from: ${url}`);
-
-  try {
-    const response = await fetch(url, {
-      method: 'GET',
-      headers: {
-        'x-application-key': appKey,
-        'x-auth-token': authToken,
-        'Content-Type': 'application/json'
-      }
-    });
-
-    if (!response.ok) {
-       const errorBody = await response.json().catch(() => ({ message: 'No error details available.' }));
-       const errorMessage = errorBody?.message || `${response.status} ${response.statusText}`;
-      throw new Error(`Failed to fetch from World Anvil API: ${errorMessage}`);
-    }
-
-    const data = await response.json();
-    console.log("Successfully fetched world data.");
-    return data;
-
-  } catch (error) {
-    console.error("Error fetching from World Anvil:", error);
-    // Re-throw the error so the UI component can catch it and display a message
-    throw error;
+  if (!r.ok) {
+    const body = await r.text();
+    throw new Error(`World Anvil proxy error: ${r.status} ${r.statusText} — ${body}`);
   }
+  return r.json();
 };
+
