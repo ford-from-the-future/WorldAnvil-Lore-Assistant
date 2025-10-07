@@ -79,11 +79,12 @@ app.post("/api/ai", async (req, res) => {
   }
 });
 
-// ---- Static files (Vite build) ----
 app.use(express.static("dist"));
-app.get("*", (_, res) => res.sendFile(path.join(__dirname, "dist", "index.html")));
 
 // (Optional) Cloud Run health check
 app.get("/_ah/health", (_, res) => res.status(200).send("ok"));
+
+// ---- Static files (Vite build) ----
+app.get("*", (_, res) => res.sendFile(path.join(__dirname, "dist", "index.html")));
 
 app.listen(PORT, () => console.log(`Server listening on ${PORT}`));
