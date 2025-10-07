@@ -23,7 +23,7 @@ app.use(
   })
 );
 
-// Replace your existing Boromir route with this:
+// ---- Boromir world route ----
 app.post("/api/boromir/world/:worldId", async (req, res) => {
   try {
     const { worldId } = req.params;
@@ -38,14 +38,17 @@ app.post("/api/boromir/world/:worldId", async (req, res) => {
       headers: {
         'x-application-key': appKey,
         'x-auth-token': authToken,
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'User-Agent': 'WorldAnvil-Lore-Assistant (https://your-domain, v1.0)',
       },
       validateStatus: () => true,
     });
 
     if (wa.status < 200 || wa.status >= 300) {
+      console.error("WA error:", wa.status, wa.data);
       return res.status(wa.status).json({
-        error: wa.data?.message || `World Anvil returned ${wa.status}`,
+        status: wa.status,
+        error: wa.data?.message || wa.data || `World Anvil returned ${wa.status}`,
       });
     }
 
@@ -56,7 +59,7 @@ app.post("/api/boromir/world/:worldId", async (req, res) => {
   }
 });
 
-// AI endpoint: runs on the server, using env var
+// ---- AI endpoint ----
 app.post("/api/ai", async (req, res) => {
   try {
     const { context, question } = req.body || {};
@@ -69,7 +72,7 @@ app.post("/api/ai", async (req, res) => {
     const model = ai.getGenerativeModel({ model: "gemini-2.0-flash" });
 
     const resp = await model.generateContent([
-      { role: "user", parts: [{ text: `${context || ""}\n\nQ: ${question}` }] }
+      { role: "user", parts: [{ text: `${context || ""}\n\nQ: ${question}` }] },
     ]);
     const text = resp?.response?.text?.() ?? "";
     res.json({ text });
@@ -79,12 +82,40 @@ app.post("/api/ai", async (req, res) => {
   }
 });
 
+// ---- Identity probe (for debugging keys) ----
+app.post("/api/boromir/identity", async (req, res) => {
+  try {
+    const { appKey, authToken } = req.body || {};
+    if (!appKey || !authToken) return res.status(400).json({ error: "Missing appKey or authToken" });
+
+    const url = "https://www.worldanvil.com/api/external/boromir/identity";
+    const r = await axios.get(url, {
+      headers: {
+        'x-application-key': appKey,
+        'x-auth-token': authToken,
+        'Content-Type': 'application/json',
+        'User-Agent': 'WorldAnvil-Lore-Assistant (https://your-domain, v1.0)',
+      },
+      validateStatus: () => true,
+    });
+
+    if (r.status < 200 || r.status >= 300) {
+      console.error("WA identity error:", r.status, r.data);
+      return res.status(r.status).json({
+        error: r.data?.message || r.data || `WA returned ${r.status}`,
+      });
+    }
+
+    res.json(r.data);
+  } catch (e) {
+    console.error("Identity proxy error:", e);
+    res.status(500).json({ error: "Identity probe failed" });
+  }
+});
+
+// ---- Static + health ----
 app.use(express.static("dist"));
-
-// (Optional) Cloud Run health check
 app.get("/_ah/health", (_, res) => res.status(200).send("ok"));
-
-// ---- Static files (Vite build) ----
 app.get("*", (_, res) => res.sendFile(path.join(__dirname, "dist", "index.html")));
 
 app.listen(PORT, () => console.log(`Server listening on ${PORT}`));
