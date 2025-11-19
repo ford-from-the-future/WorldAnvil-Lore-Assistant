@@ -15,6 +15,10 @@ View your app in AI Studio: https://ai.studio/apps/drive/1yl9z2bxrrFsj7P87dVYcvw
 
 1. Install dependencies:
    `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
+2. Start the API/AI server with your Gemini key in the environment:
+   - macOS/Linux: `GEMINI_API_KEY=your-key npm run start`
+   - Windows (PowerShell): `$env:GEMINI_API_KEY='your-key'; npm run start`
+3. In a second terminal, run the Vite dev server:
    `npm run dev`
+
+The Vite server proxies all `/api/*` requests to the Express instance so the chat UI can reach both the Boromir and Gemini endpoints during development.
