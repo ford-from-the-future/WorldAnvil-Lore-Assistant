@@ -1,5 +1,5 @@
 
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 import { ApiKeyForm } from './components/ApiKeyForm';
 import { ChatInterface } from './components/ChatInterface';
 import { Header } from './components/Header';
@@ -24,10 +24,6 @@ const App: React.FC = () => {
     try {
       const data = await fetchWorldData(appKey, authToken, worldId);
       
-      localStorage.setItem('worldAnvilAppKey', appKey);
-      localStorage.setItem('worldAnvilAuthToken', authToken);
-      localStorage.setItem('worldAnvilWorldId', worldId);
-
       setWorldAnvilAppKey(appKey);
       setWorldAnvilAuthToken(authToken);
       setWorldId(worldId);
@@ -56,9 +52,6 @@ const App: React.FC = () => {
   }, []);
   
   const resetKeys = useCallback(() => {
-    localStorage.removeItem('worldAnvilAppKey');
-    localStorage.removeItem('worldAnvilAuthToken');
-    localStorage.removeItem('worldAnvilWorldId');
     setWorldAnvilAppKey('');
     setWorldAnvilAuthToken('');
     setWorldId('');
@@ -67,15 +60,6 @@ const App: React.FC = () => {
     setMessages([]);
     setError(null);
   }, []);
-  
-  useEffect(() => {
-    const storedAppKey = localStorage.getItem('worldAnvilAppKey');
-    const storedAuthToken = localStorage.getItem('worldAnvilAuthToken');
-    const storedWorldId = localStorage.getItem('worldAnvilWorldId');
-    if (storedAppKey && storedAuthToken && storedWorldId) {
-      handleKeysSubmit(storedAppKey, storedAuthToken, storedWorldId);
-    }
-  }, [handleKeysSubmit]);
 
   const handleSendMessage = useCallback(async (question: string) => {
     if (!worldData) {
